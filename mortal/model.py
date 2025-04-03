@@ -154,16 +154,15 @@ class Brain(nn.Module):
             obs = torch.cat((obs, invisible_obs), dim=1)
         phi = self.encoder(obs)
 
-        match self.version:
-            case 1:
-                latent_out = self.latent_net(phi)
-                mu = self.mu_head(latent_out)
-                logsig = self.logsig_head(latent_out)
-                return mu, logsig
-            case 2 | 3 | 4:
-                return self.actv(phi)
-            case _:
-                raise ValueError(f'Unexpected version {self.version}')
+        if self.version == 1:
+            latent_out = self.latent_net(phi)
+            mu = self.mu_head(latent_out)
+            logsig = self.logsig_head(latent_out)
+            return mu, logsig
+        elif self.version in (2, 3, 4):
+            return self.actv(phi)
+        else:
+            raise ValueError(f'Unexpected version {self.version}')
 
     def train(self, mode=True):
         super().train(mode)
@@ -197,25 +196,24 @@ class DQN(nn.Module):
     def __init__(self, *, version=1):
         super().__init__()
         self.version = version
-        match version:
-            case 1:
-                self.v_head = nn.Linear(512, 1)
-                self.a_head = nn.Linear(512, ACTION_SPACE)
-            case 2 | 3:
-                hidden_size = 512 if version == 2 else 256
-                self.v_head = nn.Sequential(
-                    nn.Linear(1024, hidden_size),
-                    nn.Mish(inplace=True),
-                    nn.Linear(hidden_size, 1),
-                )
-                self.a_head = nn.Sequential(
-                    nn.Linear(1024, hidden_size),
-                    nn.Mish(inplace=True),
-                    nn.Linear(hidden_size, ACTION_SPACE),
-                )
-            case 4:
-                self.net = nn.Linear(1024, 1 + ACTION_SPACE)
-                nn.init.constant_(self.net.bias, 0)
+        if version == 1:
+            self.v_head = nn.Linear(512, 1)
+            self.a_head = nn.Linear(512, ACTION_SPACE)
+        elif version in (2, 3):
+            hidden_size = 512 if version == 2 else 256
+            self.v_head = nn.Sequential(
+                nn.Linear(1024, hidden_size),
+                nn.Mish(inplace=True),
+                nn.Linear(hidden_size, 1),
+            )
+            self.a_head = nn.Sequential(
+                nn.Linear(1024, hidden_size),
+                nn.Mish(inplace=True),
+                nn.Linear(hidden_size, ACTION_SPACE),
+            )
+        elif version == 4:
+            self.net = nn.Linear(1024, 1 + ACTION_SPACE)
+            nn.init.constant_(self.net.bias, 0)
 
     def forward(self, phi, mask):
         if self.version == 4:
