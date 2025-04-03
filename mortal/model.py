@@ -119,22 +119,21 @@ class Brain(nn.Module):
         actv_builder = partial(nn.Mish, inplace=True)
         pre_actv = True
 
-        match version:
-            case 1:
-                actv_builder = partial(nn.ReLU, inplace=True)
-                pre_actv = False
-                self.latent_net = nn.Sequential(
-                    nn.Linear(1024, 512),
-                    nn.ReLU(inplace=True),
-                )
-                self.mu_head = nn.Linear(512, 512)
-                self.logsig_head = nn.Linear(512, 512)
-            case 2:
-                pass
-            case 3 | 4:
-                norm_builder = partial(nn.BatchNorm1d, conv_channels, momentum=0.01, eps=1e-3)
-            case _:
-                raise ValueError(f'Unexpected version {self.version}')
+        if version == 1:
+            actv_builder = partial(nn.ReLU, inplace=True)
+            pre_actv = False
+            self.latent_net = nn.Sequential(
+                nn.Linear(1024, 512),
+                nn.ReLU(inplace=True),
+            )
+            self.mu_head = nn.Linear(512, 512)
+            self.logsig_head = nn.Linear(512, 512)
+        elif version == 2:
+            pass
+        elif version == 3 or version == 4:
+            norm_builder = partial(nn.BatchNorm1d, conv_channels, momentum=0.01, eps=1e-3)
+        else:
+            raise ValueError(f'Unexpected version {self.version}')
 
         self.encoder = ResNet(
             in_channels = in_channels,
