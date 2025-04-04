@@ -241,8 +241,7 @@ class GRP(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(hidden_size * num_layers, 24),
         )
-        for mod in self.modules():
-            mod.to(torch.float64)
+        self.float()
 
         # perms are the permutations of all possible rank-by-player result
         perms = torch.tensor(list(permutations(range(4))))
@@ -256,7 +255,7 @@ class GRP(nn.Module):
     # s[0] is score of player id 0
     def forward(self, inputs: List[Tensor]):
         lengths = torch.tensor([t.shape[0] for t in inputs], dtype=torch.int64)
-        inputs = pad_sequence(inputs, batch_first=True)
+        inputs = pad_sequence(inputs, batch_first=True).to(dtype=torch.float32)
         packed_inputs = pack_padded_sequence(inputs, lengths, batch_first=True, enforce_sorted=False)
         return self.forward_packed(packed_inputs)
 
