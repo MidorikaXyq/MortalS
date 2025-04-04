@@ -24,7 +24,8 @@ def train():
     from dataloader import FileDatasetsIter, worker_init_fn
     from lr_scheduler import LinearWarmUpCosineAnnealingLR
     from model import Brain, DQN, AuxNet
-    from libriichi.consts import obs_shape
+    from libriichi import consts
+    obs_shape = consts.obs_shape
     from config import config
 
     version = config['control']['version']

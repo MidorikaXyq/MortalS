@@ -4,7 +4,8 @@ import numpy as np
 from torch.utils.data import IterableDataset
 from model import GRP
 from reward_calculator import RewardCalculator
-from libriichi.dataset import GameplayLoader
+from libriichi import dataset
+GameplayLoader = dataset.GameplayLoader
 from config import config
 
 class FileDatasetsIter(IterableDataset):
